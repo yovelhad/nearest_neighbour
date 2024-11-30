@@ -1,5 +1,10 @@
+from typing import Tuple, List
+
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import distance
+
+from Classifier import Classifier
 
 
 def gensmallm(x_list: list, y_list: list, m: int):
@@ -35,7 +40,12 @@ def learnknn(k: int, x_train: np.array, y_train: np.array):
     :param y_train: numpy array of size (m, 1) containing the labels of the training sample
     :return: classifier data structure
     """
-    raise NotImplementedError()
+    input_to_labels = {tuple(x_train[i]): y_train[i] for i in range(x_train.shape[0])}
+
+    classifier = Classifier(k, input_to_labels)
+
+    return classifier
+
 
 def predictknn(classifier, x_test: np.array):
     """
@@ -44,7 +54,21 @@ def predictknn(classifier, x_test: np.array):
     :param x_test: numpy array of size (n, d) containing test examples that will be classified
     :return: numpy array of size (n, 1) classifying the examples in x_test
     """
-    raise NotImplementedError()
+    y_testprediction = np.array([])
+    for xi in x_test:
+        labels: dict[int: int] = {i: 0 for i in range(10)}
+        distances: dict[Tuple: float] = {
+            key: np.linalg.norm(xi - np.array(key))
+            for key in classifier.input_to_labels.keys()
+        }
+
+        knn = dict(sorted(distances.items(), key=lambda x: x[1])[:classifier.k])
+        for x_train in knn:
+            labels[classifier.input_to_labels[x_train]] += 1
+        max_label = max(labels, key=labels.get)
+        y_testprediction = np.append(y_testprediction, [max_label])
+
+    return np.array(y_testprediction, dtype=int).reshape(-1, 1)
 
 
 def simple_test():
@@ -80,9 +104,45 @@ def simple_test():
     print(f"The {i}'th test sample was classified as {preds[i]}")
 
 
+def tests_question2():
+    data = np.load('mnist_all.npz')
+
+    train2 = data['train2']
+    train3 = data['train3']
+    train5 = data['train5']
+    train6 = data['train6']
+
+    test2 = data['test2']
+    test3 = data['test3']
+    test5 = data['test5']
+    test6 = data['test6']
+
+    sample_sizes: List[int] = [25, 50, 75, 100]
+    for size in sample_sizes:
+        for i in range(10):
+            x_train, y_train = gensmallm([train2, train3, train5, train6], [2, 3, 5, 6], size)
+            x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], 50)
+            classifier = learnknn(1, x_train, y_train)
+            y_testprediction = predictknn(classifier, x_test)
+            error = np.mean(y_test != y_testprediction)
+            print(f"Sample size: {size} iteration: {i} error: {error}")
+            plt.plot(size, error)
+
+
+
 if __name__ == '__main__':
-
     # before submitting, make sure that the function simple_test runs without errors
-    simple_test()
+
+    # k = 1
+    # x_train = np.array([[1, 2], [3, 4], [5, 6]])
+    # y_train = np.array([1, 0, 1])
+    # classifier = learnknn(k, x_train, y_train)
+    #
+    # x_test = np.array([[10, 11], [3.1, 4.2], [2.9, 4.2], [5, 6]])
+    # y_testprediction = predictknn(classifier, x_test)
+    # print(y_testprediction)
 
 
+    # simple_test()
+
+    tests_question2()
