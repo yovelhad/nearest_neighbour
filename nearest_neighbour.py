@@ -119,36 +119,66 @@ def tests_question2():
 
     # -----------------------------------------------Question_2Part_a---------------------------------------------------
 
+    # avg_list: List[float] = []
+    # min_error_list = []
+    # max_error_list = []
+    # for i in range(10, 101, 10):
+    #     errors: List[float] = []
+    #     for j in range(1, 11):
+    #         x_train, y_train = gensmallm([train2, train3, train5, train6], [2, 3, 5, 6], i)
+    #         x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], 50)
+    #         classifier = learnknn(1, x_train, y_train)
+    #         y_testprediction = predictknn(classifier, x_test)
+    #         error = np.mean(y_test.flatten() != y_testprediction.flatten())
+    #         errors.append(error)
+    #         print(f"Sample size: {i} iteration: {j} error: {error}")
+    #     avg: float = np.mean(errors)
+    #     avg_list.append(round(avg, 2))
+    #     min_error_list.append(min(errors))
+    #     max_error_list.append(max(errors))
+    # print(avg_list)
+    #
+    # sample_sizes = list(range(10, 101, 10))
+    # lower_error = np.array(avg_list) - np.array(min_error_list)
+    # upper_error = np.array(max_error_list) - np.array(avg_list)
+    #
+    # ax = plt.axes()
+    # ax.errorbar(sample_sizes, avg_list, yerr=[lower_error, upper_error], marker='o', label='Average Error')
+    # ax.set(xlim=(0, 120), ylim=(0, 1), xlabel='sample_size', ylabel='average_error')
+    # ax.legend()
+    # plt.grid(True)
+    # plt.show()
+
+    # -----------------------------------------------Question_2Part_d---------------------------------------------------
     avg_list: List[float] = []
     min_error_list = []
     max_error_list = []
-    for i in range(10, 101, 10):
-        errors = []
+    errors: List[float] = []
+    for i in range(1, 12):
         for j in range(1, 11):
-            x_train, y_train = gensmallm([train2, train3, train5, train6], [2, 3, 5, 6], i)
+            x_train, y_train = gensmallm([train2, train3, train5, train6], [2, 3, 5, 6], 200)
             x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], 50)
-            classifier = learnknn(1, x_train, y_train)
+            classifier = learnknn(i, x_train, y_train)
             y_testprediction = predictknn(classifier, x_test)
             error = np.mean(y_test.flatten() != y_testprediction.flatten())
             errors.append(error)
-            print(f"Sample size: {i} iteration: {j} error: {error}")
+            print(f"k = {i} Sample size: 200 error: {error}")
         avg: float = np.mean(errors)
         avg_list.append(round(avg, 2))
         min_error_list.append(min(errors))
         max_error_list.append(max(errors))
     print(avg_list)
 
-    sample_sizes = list(range(10, 101, 10))
+    k_sizes = list(range(1, 12, 1))
     lower_error = np.array(avg_list) - np.array(min_error_list)
     upper_error = np.array(max_error_list) - np.array(avg_list)
 
     ax = plt.axes()
-    ax.errorbar(sample_sizes, avg_list, yerr=[lower_error, upper_error], marker='o', label='Average Error')
-    ax.set(xlim=(0, 120), ylim=(0, 1), xlabel='sample_size', ylabel='average_error')
+    ax.errorbar(k_sizes, avg_list, yerr=[lower_error, upper_error], marker='o', label='Average Error')
+    ax.set(xlim=(0, 12), ylim=(0, 1), xlabel='k_size', ylabel='average_error')
     ax.legend()
     plt.grid(True)
     plt.show()
-
 
 if __name__ == '__main__':
     # before submitting, make sure that the function simple_test runs without errors
