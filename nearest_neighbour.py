@@ -1,5 +1,5 @@
 from typing import Tuple, List
-
+import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import distance
@@ -117,17 +117,37 @@ def tests_question2():
     test5 = data['test5']
     test6 = data['test6']
 
-    sample_sizes: List[int] = [25, 50, 75, 100]
-    for size in sample_sizes:
-        for i in range(10):
-            x_train, y_train = gensmallm([train2, train3, train5, train6], [2, 3, 5, 6], size)
+    # -----------------------------------------------Question_2Part_a---------------------------------------------------
+
+    avg_list: List[float] = []
+    min_error_list = []
+    max_error_list = []
+    for i in range(10, 101, 10):
+        errors = []
+        for j in range(1, 11):
+            x_train, y_train = gensmallm([train2, train3, train5, train6], [2, 3, 5, 6], i)
             x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], 50)
             classifier = learnknn(1, x_train, y_train)
             y_testprediction = predictknn(classifier, x_test)
-            error = np.mean(y_test != y_testprediction)
-            print(f"Sample size: {size} iteration: {i} error: {error}")
-            plt.plot(size, error)
+            error = np.mean(y_test.flatten() != y_testprediction.flatten())
+            errors.append(error)
+            print(f"Sample size: {i} iteration: {j} error: {error}")
+        avg: float = np.mean(errors)
+        avg_list.append(round(avg, 2))
+        min_error_list.append(min(errors))
+        max_error_list.append(max(errors))
+    print(avg_list)
 
+    sample_sizes = list(range(10, 101, 10))
+    lower_error = np.array(avg_list) - np.array(min_error_list)
+    upper_error = np.array(max_error_list) - np.array(avg_list)
+
+    ax = plt.axes()
+    ax.errorbar(sample_sizes, avg_list, yerr=[lower_error, upper_error], marker='o', label='Average Error')
+    ax.set(xlim=(0, 120), ylim=(0, 1), xlabel='sample_size', ylabel='average_error')
+    ax.legend()
+    plt.grid(True)
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -141,7 +161,6 @@ if __name__ == '__main__':
     # x_test = np.array([[10, 11], [3.1, 4.2], [2.9, 4.2], [5, 6]])
     # y_testprediction = predictknn(classifier, x_test)
     # print(y_testprediction)
-
 
     # simple_test()
 
