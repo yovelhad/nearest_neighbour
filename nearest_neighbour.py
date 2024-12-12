@@ -1,5 +1,12 @@
+from typing import Tuple, List
+
+import numpy
+import pandas as pd
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import distance
+
+from Classifier import Classifier
 
 
 def gensmallm(x_list: list, y_list: list, m: int):
@@ -35,7 +42,12 @@ def learnknn(k: int, x_train: np.array, y_train: np.array):
     :param y_train: numpy array of size (m, 1) containing the labels of the training sample
     :return: classifier data structure
     """
-    raise NotImplementedError()
+    input_to_labels = {tuple(x_train[i]): y_train[i] for i in range(x_train.shape[0])}
+
+    classifier = Classifier(k, input_to_labels)
+
+    return classifier
+
 
 def predictknn(classifier, x_test: np.array):
     """
@@ -44,7 +56,21 @@ def predictknn(classifier, x_test: np.array):
     :param x_test: numpy array of size (n, d) containing test examples that will be classified
     :return: numpy array of size (n, 1) classifying the examples in x_test
     """
-    raise NotImplementedError()
+    y_testprediction = np.array([])
+    for xi in x_test:
+        labels: dict[int: int] = {i: 0 for i in range(10)}
+        distances: dict[Tuple: float] = {
+            key: np.linalg.norm(xi - np.array(key))
+            for key in classifier.input_to_labels.keys()
+        }
+
+        knn = dict(sorted(distances.items(), key=lambda x: x[1])[:classifier.k])
+        for x_train in knn:
+            labels[classifier.input_to_labels[x_train]] += 1
+        max_label = max(labels, key=labels.get)
+        y_testprediction = np.append(y_testprediction, [max_label])
+
+    return np.array(y_testprediction, dtype=int).reshape(-1, 1)
 
 
 def simple_test():
@@ -80,9 +106,151 @@ def simple_test():
     print(f"The {i}'th test sample was classified as {preds[i]}")
 
 
+def tests_question2():
+    data = np.load('mnist_all.npz')
+
+    train2: numpy.array(int) = data['train2']
+    train3: numpy.array(int) = data['train3']
+    train5: numpy.array(int) = data['train5']
+    train6: numpy.array(int) = data['train6']
+
+    test2: numpy.array(int) = data['test2']
+    test3: numpy.array(int) = data['test3']
+    test5: numpy.array(int) = data['test5']
+    test6: numpy.array(int) = data['test6']
+
+    avg_list: List[float] = []
+    min_error_list: List[float] = []
+    max_error_list: List[float] = []
+
+    choice: str = '\0'
+    while choice not in ['a', 'd', 'e']:
+        choice = input("Please enter the question you wish to run a/d/e: ")
+
+    # -----------------------------------------------Question_2Part_a---------------------------------------------------
+    if choice == 'a':
+        for i in range(10, 101, 10):
+            errors: List[float] = []
+            for j in range(1, 11):
+                x_train, y_train = gensmallm([train2, train3, train5, train6], [2, 3, 5, 6], i)
+                x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], 50)
+                classifier = learnknn(1, x_train, y_train)
+                y_testprediction = predictknn(classifier, x_test)
+                error: float = np.mean(y_test.flatten() != y_testprediction.flatten())
+                errors.append(error)
+                print(f"Sample size: {i} iteration: {j} error: {error}")
+            avg: float = np.mean(errors)
+            avg_list.append(round(avg, 2))
+            min_error_list.append(min(errors))
+            max_error_list.append(max(errors))
+        print(avg_list)
+
+        sample_sizes: List[int] = list(range(10, 101, 10))
+        lower_error = np.array(avg_list) - np.array(min_error_list)
+        upper_error = np.array(max_error_list) - np.array(avg_list)
+
+        ax = plt.axes()
+        ax.errorbar(sample_sizes, avg_list, yerr=[lower_error, upper_error], marker='o', label='Average Error',
+                    color='green', linestyle='solid', markerfacecolor='red', markersize=8)
+        ax.set(xlim=(0, 120), ylim=(0, 1), xlabel='sample_size', ylabel='average_error')
+        ax.legend()
+        plt.grid(True)
+        plt.show()
+
+    # -----------------------------------------------Question_2Part_d---------------------------------------------------
+    elif choice == 'd':
+        for i in range(1, 12):
+            errors: List[float] = []
+            for j in range(1, 11):
+                x_train, y_train = gensmallm([train2, train3, train5, train6], [2, 3, 5, 6], 200)
+                x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], 50)
+                classifier = learnknn(i, x_train, y_train)
+                y_testprediction = predictknn(classifier, x_test)
+                error: float = np.mean(y_test.flatten() != y_testprediction.flatten())
+                errors.append(error)
+                print(f"k = {i} Sample size: 200 error: {error}")
+            avg: float = np.mean(errors)
+            avg_list.append(round(avg, 2))
+            min_error_list.append(min(errors))
+            max_error_list.append(max(errors))
+        print(avg_list)
+
+        k_sizes = list(range(1, 12, 1))
+        lower_error = np.array(avg_list) - np.array(min_error_list)
+        upper_error = np.array(max_error_list) - np.array(avg_list)
+
+        ax = plt.axes()
+        ax.errorbar(k_sizes, avg_list, yerr=[lower_error, upper_error], marker='o', label='Average Error',
+                    color='green', linestyle='solid', markerfacecolor='red', markersize=8)
+        ax.set(xlim=(0, 12), ylim=(0, 1), xlabel='k_size', ylabel='average_error')
+        ax.legend()
+        plt.grid(True)
+        plt.show()
+
+    # -----------------------------------------------Question_2Part_e---------------------------------------------------
+    else:
+        print("Running corrupted train and test:")
+        for i in range(1, 12):
+            errors: List[float] = []
+            for j in range(1, 11):
+                x_train, y_train = gensmallm([train2, train3, train5, train6], [2, 3, 5, 6], 200)
+                x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], 50)
+
+                y_train = y_train.flatten()
+                y_train = alter_random_labels(arr=y_train, percentage=0.3)
+
+                y_test = y_test.flatten()
+                y_test = alter_random_labels(arr=y_test, percentage=0.3)
+
+                classifier = learnknn(i, x_train, y_train)
+                y_testprediction = predictknn(classifier, x_test)
+                error: float = np.mean(y_test != y_testprediction.flatten())
+                errors.append(error)
+                print(f"k = {i} Sample size: 200 error: {error}")
+            avg: float = np.mean(errors)
+            avg_list.append(round(avg, 2))
+            min_error_list.append(min(errors))
+            max_error_list.append(max(errors))
+        print(avg_list)
+
+        k_sizes = list(range(1, 12, 1))
+        lower_error = np.array(avg_list) - np.array(min_error_list)
+        upper_error = np.array(max_error_list) - np.array(avg_list)
+
+        ax = plt.axes()
+        ax.errorbar(k_sizes, avg_list, yerr=[lower_error, upper_error], marker='o', label='Average Error',
+                    color='green', linestyle='solid', markerfacecolor='red', markersize=8)
+        ax.set(xlim=(0, 12), ylim=(0, 1), xlabel='k_size', ylabel='average_error')
+        ax.legend()
+        plt.grid(True)
+        plt.show()
+
+
+def alter_random_labels(arr: numpy.array(int), percentage: float) -> numpy.array(int):
+    labels: List[int] = [2, 3, 5, 6]
+    arr_size: int = arr.size
+    random_labels: List[int] = np.random.choice(arr_size, int(percentage * arr_size), replace=False)
+
+    for i in random_labels:
+        current_label: int = arr[i]
+        possible_choices: List[int] = [label for label in labels if label != current_label]
+        arr[i] = np.random.choice(possible_choices)
+
+    return arr
+
+
 if __name__ == '__main__':
-
     # before submitting, make sure that the function simple_test runs without errors
-    simple_test()
 
+    # k = 1
+    # x_train = np.array([[1, 2], [3, 4], [5, 6]])
+    # y_train = np.array([1, 0, 1])
+    # classifier = learnknn(k, x_train, y_train)
+    #
+    # x_test = np.array([[10, 11], [3.1, 4.2], [2.9, 4.2], [5, 6]])
+    # y_testprediction = predictknn(classifier, x_test)
+    # print(y_testprediction)
 
+    # simple_test()
+
+    tests_question2()
