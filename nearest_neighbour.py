@@ -133,7 +133,11 @@ def tests_question2():
             errors: List[float] = []
             for j in range(1, 11):
                 x_train, y_train = gensmallm([train2, train3, train5, train6], [2, 3, 5, 6], i)
-                x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], 50)
+
+                # x_test = np.vstack((test2, test3, test5, test6))
+                # np.random.shuffle(x_test)
+
+                x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], test2.size + test3.size + test5.size + test6.size)
                 classifier = learnknn(1, x_train, y_train)
                 y_testprediction = predictknn(classifier, x_test)
                 error: float = np.mean(y_test.flatten() != y_testprediction.flatten())
@@ -163,7 +167,7 @@ def tests_question2():
             errors: List[float] = []
             for j in range(1, 11):
                 x_train, y_train = gensmallm([train2, train3, train5, train6], [2, 3, 5, 6], 200)
-                x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], 50)
+                x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], test2.size + test3.size + test5.size + test6.size)
                 classifier = learnknn(i, x_train, y_train)
                 y_testprediction = predictknn(classifier, x_test)
                 error: float = np.mean(y_test.flatten() != y_testprediction.flatten())
@@ -182,7 +186,7 @@ def tests_question2():
         ax = plt.axes()
         ax.errorbar(k_sizes, avg_list, yerr=[lower_error, upper_error], marker='o', label='Average Error',
                     color='green', linestyle='solid', markerfacecolor='red', markersize=8)
-        ax.set(xlim=(0, 12), ylim=(0, 1), xlabel='k_size', ylabel='average_error')
+        ax.set(xlim=(0, 12), ylim=(0, 0.2), xlabel='k_size', ylabel='average_error')
         ax.legend()
         plt.grid(True)
         plt.show()
@@ -194,7 +198,7 @@ def tests_question2():
             errors: List[float] = []
             for j in range(1, 11):
                 x_train, y_train = gensmallm([train2, train3, train5, train6], [2, 3, 5, 6], 200)
-                x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], 50)
+                x_test, y_test = gensmallm([test2, test3, test5, test6], [2, 3, 5, 6], test2.size + test3.size + test5.size + test6.size)
 
                 y_train = y_train.flatten()
                 y_train = alter_random_labels(arr=y_train, percentage=0.3)
@@ -220,7 +224,7 @@ def tests_question2():
         ax = plt.axes()
         ax.errorbar(k_sizes, avg_list, yerr=[lower_error, upper_error], marker='o', label='Average Error',
                     color='green', linestyle='solid', markerfacecolor='red', markersize=8)
-        ax.set(xlim=(0, 12), ylim=(0, 1), xlabel='k_size', ylabel='average_error')
+        ax.set(xlim=(0, 12), ylim=(0, 0.2), xlabel='k_size', ylabel='average_error')
         ax.legend()
         plt.grid(True)
         plt.show()
