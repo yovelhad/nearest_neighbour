@@ -43,10 +43,7 @@ def learnknn(k: int, x_train: np.array, y_train: np.array):
     :return: classifier data structure
     """
     input_to_labels = {tuple(x_train[i]): y_train[i] for i in range(x_train.shape[0])}
-
-    classifier = Classifier(k, input_to_labels)
-
-    return classifier
+    return Classifier(k, input_to_labels)
 
 
 def predictknn(classifier, x_test: np.array):
@@ -56,21 +53,44 @@ def predictknn(classifier, x_test: np.array):
     :param x_test: numpy array of size (n, d) containing test examples that will be classified
     :return: numpy array of size (n, 1) classifying the examples in x_test
     """
-    y_testprediction = np.array([])
-    for xi in x_test:
-        labels: dict[int: int] = {i: 0 for i in range(10)}
-        distances: dict[Tuple: float] = {
-            key: np.linalg.norm(xi - np.array(key))
-            for key in classifier.input_to_labels.keys()
-        }
+    # y_testprediction = np.array([])
+    # for xi in x_test:
+    #     labels: dict[int: int] = {i: 0 for i in range(10)}
+    #     distances: dict[Tuple: float] = {
+    #         key: np.linalg.norm(xi - np.array(key))
+    #         for key in classifier.input_to_labels.keys()
+    #     }
+    #
+    #     knn = dict(sorted(distances.items(), key=lambda x: x[1])[:classifier.k])
+    #     for x_train in knn:
+    #         labels[classifier.input_to_labels[x_train]] += 1
+    #     max_label = max(labels, key=labels.get)
+    #     y_testprediction = np.append(y_testprediction, [max_label])
+    #
+    # return np.array(y_testprediction, dtype=int).reshape(-1, 1)
 
-        knn = dict(sorted(distances.items(), key=lambda x: x[1])[:classifier.k])
-        for x_train in knn:
-            labels[classifier.input_to_labels[x_train]] += 1
-        max_label = max(labels, key=labels.get)
-        y_testprediction = np.append(y_testprediction, [max_label])
+    # Extract training data and labels from the classifier
+    x_train = np.array(list(classifier.input_to_labels.keys()))  # Shape: (n, d)
+    y_train = np.array(list(classifier.input_to_labels.values()))  # Shape: (n,)
 
-    return np.array(y_testprediction, dtype=int).reshape(-1, 1)
+    # Initialize an array to store predictions
+    y_testprediction = np.empty(x_test.shape[0], dtype=int)
+
+    # Iterate through each test point
+    for i, xi in enumerate(x_test):
+        # Vectorized distance computation
+        distances = np.linalg.norm(x_train - xi, axis=1)  # Shape: (n,)
+
+        # Find the indices of the k smallest distances
+        knn_indices = np.argsort(distances)[:classifier.k]
+
+        # Retrieve labels of the k-nearest neighbors
+        knn_labels = y_train[knn_indices].astype(int)
+
+        # Determine the most frequent label
+        y_testprediction[i] = np.bincount(knn_labels).argmax()
+
+    return y_testprediction.reshape(-1, 1)
 
 
 def simple_test():
